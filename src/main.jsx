@@ -13,7 +13,7 @@ const vehicleTypes = [
 const defaultServices = [
   {
     id:'detailing',
-    name:'Lavado Detailing',
+    name:'Detailing completo',
     prices:{auto:28000,suv:30000,pickup:37000},
     deposit:0,
     minutes:120,
@@ -38,14 +38,8 @@ const detailingIncludes = [
 ];
 
 const initialBookings = [
-  {id:1,date:'2026-08-12',time:'10:30',name:'Martín López',phone:'342 555 1100',vehicleType:'auto',vehicle:'VW Golf',plate:'AB123CD',serviceId:'detailing',service:'Lavado Detailing',price:28000,deposit:0,status:'Pendiente'},
-  {id:2,date:'2026-08-13',time:'11:00',name:'Lucas Gómez',phone:'342 555 3300',vehicleType:'pickup',vehicle:'Ford Ranger',plate:'AF789HI',serviceId:'detailing',service:'Lavado Detailing',price:42000,deposit:0,status:'Confirmado'},
-];
-
-const reviews = [
-  {name:'Sofía R.', text:'Reservé en dos minutos y el auto quedó impecable.', stars:'★★★★★'},
-  {name:'Lucas M.', text:'Muy buena atención y excelente terminación.', stars:'★★★★★'},
-  {name:'Martín P.', text:'La limpieza quedó espectacular. Volvería sin dudas.', stars:'★★★★★'},
+  {id:1,date:'2026-08-12',time:'10:30',name:'Martín López',phone:'342 555 1100',vehicleType:'auto',vehicle:'VW Golf',plate:'AB123CD',serviceId:'detailing',service:'Detailing completo',price:28000,deposit:0,status:'Pendiente'},
+  {id:2,date:'2026-08-13',time:'11:00',name:'Lucas Gómez',phone:'342 555 3300',vehicleType:'pickup',vehicle:'Ford Ranger',plate:'AF789HI',serviceId:'detailing',service:'Detailing completo',price:42000,deposit:0,status:'Confirmado'},
 ];
 
 function App(){
@@ -55,8 +49,9 @@ function App(){
   const [bookings,setBookings] = useState(initialBookings);
   const [slots,setSlots] = useState(['10:30','11:00','11:30','13:00','14:30','16:30']);
   const [openSlots,setOpenSlots] = useState(['10:30','11:00','11:30','13:00','14:30','16:30']);
-  const [booking,setBooking] = useState({vehicleType:null,serviceId:'detailing',extras:[],date:'2026-08-12',time:'',name:'',phone:'',plate:'',vehicle:''});
+  const [booking,setBooking] = useState({vehicleType:null,serviceId:'detailing',extras:[],date:'2026-08-12',time:'',name:'',phone:'',plate:'',vehicle:'',notes:''});
   const [notice,setNotice] = useState('');
+  const [requestCode,setRequestCode] = useState('');
 
   const selected = services.find(s=>s.id===booking.serviceId);
   const basePrice = selected && booking.vehicleType ? selected.prices[booking.vehicleType] : 0;
@@ -75,13 +70,15 @@ function App(){
       setNotice('Completá vehículo, día, horario preferido, nombre y teléfono para enviar la solicitud.'); return;
     }
     if(![3,4,5,6].includes(weekday)){
-      setNotice('El lavadero trabaja de miércoles a sábado. Elegí uno de esos días.'); return;
+      setNotice('VFC Detailing trabaja de miércoles a sábado. Elegí uno de esos días.'); return;
     }
+    const id = Date.now();
+    setRequestCode(`VFC-${String(id).slice(-5)}`);
     setBookings(prev=>[...prev,{
-      id:Date.now(), date:booking.date, time:booking.time, name:booking.name, phone:booking.phone,
+      id, date:booking.date, time:booking.time, name:booking.name, phone:booking.phone,
       vehicleType:booking.vehicleType, vehicle:booking.vehicle||vehicleTypes.find(v=>v.id===booking.vehicleType)?.label,
       plate:booking.plate||'Sin patente', serviceId:selected.id, service:selected.name,
-      price:totalPrice, deposit:0, status:'Pendiente', extras:[...booking.extras]
+      price:totalPrice, deposit:0, status:'Pendiente', extras:[...booking.extras], notes:booking.notes
     }]);
     navTo('success');
   };
@@ -92,14 +89,14 @@ function App(){
     <Topbar navTo={navTo}/>
     {route==='home' && <Home services={services} booking={booking} setBooking={setBooking} navTo={navTo}/>} 
     {route==='booking' && <Booking booking={booking} setBooking={setBooking} selected={selected} basePrice={basePrice} extrasPrice={extrasPrice} totalPrice={totalPrice} openSlots={openSlots} notice={notice} sendRequest={sendRequest} navTo={navTo}/>} 
-    {route==='success' && <Success booking={booking} selected={selected} totalPrice={totalPrice} navTo={navTo}/>} 
+    {route==='success' && <Success booking={booking} selected={selected} totalPrice={totalPrice} requestCode={requestCode} navTo={navTo}/>} 
     <Footer navTo={navTo}/>
   </div>
 }
 
 function Topbar({navTo}){
   return <header className="topbar"><div className="container topbar-inner">
-    <button className="mini-brand" onClick={()=>navTo('home')}><span className="mini-logo">SG</span><b>Shine Garage</b></button>
+    <button className="mini-brand" onClick={()=>navTo('home')}><span className="mini-logo">VFC</span><b>VFC Detailing</b></button>
     <button className="top-cta" onClick={()=>navTo('booking')}>Solicitar turno</button>
   </div></header>
 }
@@ -107,9 +104,9 @@ function Topbar({navTo}){
 function BusinessCard(){
   return <section className="business-wrap"><div className="container">
     <div className="business-card">
-      <div className="logo-photo">SG</div>
+      <div className="logo-photo">VFC</div>
       <div className="business-info">
-        <div className="business-title-row"><div><span className="eyebrow">LAVADO • DETAILING</span><h1>Shine Garage</h1></div><span className="rating">★ 4.9</span></div>
+        <div className="business-title-row"><div><span className="eyebrow">LAVADO • DETAILING</span><h1>VFC Detailing</h1></div><span className="rating">Santa Fe</span></div>
         <div className="business-meta">
           <span>📍 Entre Ríos 3556</span>
           <span>🕒 Mié 10:30–17:00 · Jue a Sáb 10:30–18:00</span>
@@ -137,23 +134,23 @@ function Home({services,booking,setBooking,navTo}){
         </div>
 
         <div className="services-title"><h3>¿Qué incluye?</h3><span>Detailing completo</span></div>
-        <div className="service-select-list">{detailingIncludes.map(item=><button type="button" key={item}><span><b>✓ {item}</b></span></button>)}</div>
+        <div className="include-grid">{detailingIncludes.map(item=><div className="include-item" key={item}>✓ {item}</div>)}</div>
         <small className="muted">Pickups: el precio incluye limpieza completa de caja trasera. Vehículos con condiciones especiales: consultar.</small>
       </section>
 
       <section className="works-section">
-        <div className="section-heading"><div><span className="eyebrow">RESULTADOS REALES</span><h2>Trabajos realizados</h2></div><p>Después reemplazamos estas imágenes por fotos reales del lavadero.</p></div>
-        <div className="gallery-grid">
-          <div className="work-card work-1"><span>Exterior brillante</span></div>
-          <div className="work-card work-2"><span>Detalle de ruedas</span></div>
-          <div className="work-card work-3"><span>Terminación premium</span></div>
-          <div className="work-card work-4"><span>Interior impecable</span></div>
+        <div className="section-heading"><div><span className="eyebrow">TRABAJOS REALES</span><h2>Resultados de VFC</h2></div><p>Exterior e interior realizados por VFC Detailing.</p></div>
+        <div className="gallery-grid gallery-real">
+          <div className="work-card real-1"><span>Terminación exterior</span></div>
+          <div className="work-card real-2"><span>Detalle interior</span></div>
+          <div className="work-card real-1"><span>Brillo y terminación</span></div>
+          <div className="work-card real-2"><span>Interior protegido</span></div>
         </div>
       </section>
 
-      <section className="reviews-section">
-        <div className="section-heading"><div><span className="eyebrow">OPINIONES</span><h2>Lo que dicen nuestros clientes</h2></div><div className="big-rating">4.9 <span>★★★★★</span></div></div>
-        <div className="reviews-grid">{reviews.map(r=><article className="review-card" key={r.name}><div className="stars">{r.stars}</div><p>“{r.text}”</p><b>{r.name}</b></article>)}</div>
+      <section className="policy-card">
+        <div><span className="eyebrow">ANTES DE SOLICITAR</span><h3>Turnos flexibles, confirmados por VFC</h3><p>Elegís un día y horario preferido. VFC revisa la agenda y confirma ese horario o te propone otra opción.</p></div>
+        <div className="policy-points"><span>✓ Cancelación con 24 hs de anticipación</span><span>✓ Precios sujetos a revisión en vehículos con condiciones especiales</span></div>
       </section>
     </main>
   </>
@@ -173,16 +170,16 @@ function Booking({booking,setBooking,selected,basePrice,extrasPrice,totalPrice,o
     <button className="back-link" onClick={()=>navTo('home')}>← Volver</button>
     <div className="booking-layout">
       <section className="booking-panel">
-        <div className="panel-heading"><div><span className="eyebrow">SOLICITUD DE TURNO</span><h2>Armá tu detailing</h2><p>Elegí adicionales y después indicá el día y horario que preferís. El lavadero confirma el turno antes de que quede reservado.</p></div><span className="step-pill">2 de 3</span></div>
+        <div className="panel-heading"><div><span className="eyebrow">SOLICITUD DE TURNO</span><h2>Armá tu detailing</h2><p>Elegí adicionales y después indicá el día y horario que preferís. VFC confirma el turno antes de que quede reservado.</p></div><span className="step-pill">2 de 3</span></div>
 
         <label className="field-label">Vehículo</label>
         <VehicleSelector value={booking.vehicleType} onChange={(id)=>setBooking(b=>({...b,vehicleType:id}))}/>
-        <div className="notice"><b>{selected.name}</b> · {vehicle.label} · {money(basePrice)} · {vehicle.duration}</div>
+        <div className="price-strip"><div><small>Detailing base</small><b>{money(basePrice)}</b></div><div><small>Duración estimada</small><b>{vehicle.duration}</b></div></div>
 
         <label className="field-label">Servicios adicionales</label>
-        <div className="service-select-list">{extras.map(extra=>{
+        <div className="extra-grid">{extras.map(extra=>{
           const active=booking.extras.includes(extra.id);
-          return <button type="button" key={extra.id} className={active?'selected':''} onClick={()=>toggleExtra(extra.id)}><span><b>{active?'✓ ':''}{extra.name}</b><small>{extra.desc}</small></span><strong>+{money(extra.prices[booking.vehicleType])}</strong></button>
+          return <button type="button" key={extra.id} className={`extra-card ${active?'selected':''}`} onClick={()=>toggleExtra(extra.id)}><span><b>{active?'✓ ':''}{extra.name}</b><small>{extra.desc}</small></span><strong>+{money(extra.prices[booking.vehicleType])}</strong></button>
         })}</div>
 
         <div className="form-grid">
@@ -192,9 +189,10 @@ function Booking({booking,setBooking,selected,basePrice,extrasPrice,totalPrice,o
           <label>Teléfono<input placeholder="342..." value={booking.phone} onChange={e=>setBooking(b=>({...b,phone:e.target.value}))}/></label>
           <label>Modelo del vehículo<input placeholder="Ej. Toyota Hilux" value={booking.vehicle} onChange={e=>setBooking(b=>({...b,vehicle:e.target.value}))}/></label>
           <label>Patente <span className="muted">(opcional)</span><input placeholder="AB123CD" value={booking.plate} onChange={e=>setBooking(b=>({...b,plate:e.target.value.toUpperCase()}))}/></label>
+          <label className="full-field">Observaciones <span className="muted">(opcional)</span><textarea placeholder="Ej. mucho barro, pelos de mascota, manchas difíciles..." value={booking.notes} onChange={e=>setBooking(b=>({...b,notes:e.target.value}))}/><small className="muted">Si el vehículo tiene una condición especial, VFC puede revisar el precio antes de confirmar.</small></label>
         </div>
 
-        <div className="notice">La solicitud no bloquea automáticamente el horario. El lavadero revisa la agenda y confirma o propone otro horario.</div>
+        <div className="notice">La solicitud no bloquea automáticamente el horario. VFC Detailing revisa la agenda y confirma o propone otra opción.</div>
         {notice && <div className="notice">{notice}</div>}
       </section>
 
@@ -207,15 +205,15 @@ function Booking({booking,setBooking,selected,basePrice,extrasPrice,totalPrice,o
         <div className="summary-row"><span>Total estimado</span><b>{money(totalPrice)}</b></div>
         <div className="summary-row"><span>Duración</span><b>{vehicle.duration}</b></div>
         <button className="pay-btn" onClick={sendRequest}>Enviar solicitud de turno</button>
-        <small>Una vez revisada la disponibilidad, el lavadero te confirma el horario. Las cancelaciones deben hacerse con 24 hs de anticipación.</small>
+        <small>VFC revisará la disponibilidad. Las cancelaciones deben hacerse con 24 hs de anticipación.</small>
       </aside>
     </div>
   </main>
 }
 
-function Success({booking,selected,totalPrice,navTo}){
+function Success({booking,selected,totalPrice,requestCode,navTo}){
   const vehicle = vehicleTypes.find(v=>v.id===booking.vehicleType);
-  return <main className="container success-wrap"><div className="success-card"><div className="check">✓</div><span className="eyebrow">SOLICITUD ENVIADA</span><h1>¡Listo, {booking.name || 'recibimos tu solicitud'}!</h1><p>El horario todavía no está confirmado. El lavadero revisará la disponibilidad y te confirmará o propondrá otra opción.</p><div className="success-details"><b>{selected?.name}</b><span>{booking.date} · horario preferido {booking.time}</span><span>{vehicle?.label} · total estimado {money(totalPrice)}</span></div><button className="pay-btn" onClick={()=>navTo('home')}>Volver al inicio</button></div></main>
+  return <main className="container success-wrap"><div className="success-card"><div className="check">✓</div><span className="eyebrow">SOLICITUD RECIBIDA</span><h1>¡Listo, {booking.name || 'recibimos tu solicitud'}!</h1><p>VFC Detailing va a revisar la disponibilidad y te confirmará el horario o te propondrá otra opción.</p><div className="request-code">{requestCode || 'VFC-PENDIENTE'}</div><div className="success-details"><b>{selected?.name}</b><span>{booking.date} · horario preferido {booking.time}</span><span>{vehicle?.label} · total estimado {money(totalPrice)}</span></div><button className="pay-btn" onClick={()=>navTo('home')}>Volver al inicio</button></div></main>
 }
 
 function Admin({adminTab,setAdminTab,bookings,setBookings,services,setServices,slots,setSlots,openSlots,setOpenSlots,navTo}){
@@ -231,7 +229,7 @@ function Admin({adminTab,setAdminTab,bookings,setBookings,services,setServices,s
 
   return <div className="admin-shell">
     <aside className="admin-sidebar">
-      <div className="admin-brand"><span className="mini-logo">SG</span><div><b>Shine Garage</b><small>Administración</small></div></div>
+      <div className="admin-brand"><span className="mini-logo">VFC</span><div><b>VFC Detailing</b><small>Administración</small></div></div>
       {[['summary','Resumen'],['bookings','Solicitudes'],['hours','Horarios'],['services','Precios']].map(([id,l])=><button key={id} className={adminTab===id?'active':''} onClick={()=>setAdminTab(id)}>{l}</button>)}
       <button className="admin-back" onClick={()=>navTo('home')}>← Ver sitio</button>
     </aside>
@@ -264,7 +262,7 @@ function BookingsTable({bookings,updateStatus}){
 }
 
 function Footer({navTo}){
-  return <footer><div className="container footer-inner"><div><b>Shine Garage</b><span>Entre Ríos 3556 · Miércoles a sábado</span></div><button onClick={()=>navTo('admin')}>Acceso administrador</button></div></footer>
+  return <footer><div className="container footer-inner"><div><b>VFC Detailing</b><span>Entre Ríos 3556 · Miércoles a sábado</span></div><button onClick={()=>navTo('admin')}>Acceso administrador</button></div></footer>
 }
 
 createRoot(document.getElementById('root')).render(<App/>);
