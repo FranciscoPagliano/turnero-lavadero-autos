@@ -140,16 +140,15 @@ function Booking({services,booking,setBooking,selected,selectedPrice,openSlots,n
     <button className="back-link" onClick={()=>navTo('home')}>← Volver</button>
     <div className="booking-layout">
       <section className="booking-panel">
-        <div className="panel-heading"><div><span className="eyebrow">RESERVA ONLINE</span><h2>Completá tu turno</h2><p>{selected ? `Elegiste ${selected.name}. Ahora seleccioná tu vehículo para ver el precio.` : 'Primero elegí un servicio y después seleccioná tu vehículo.'}</p></div><span className="step-pill">2–4 de 4</span></div>
+        <div className="panel-heading"><div><span className="eyebrow">RESERVA ONLINE</span><h2>Completá tu turno</h2><p>{selected ? `Elegiste ${selected.name}. Seleccioná tu vehículo y los precios se actualizan automáticamente.` : 'Seleccioná tu vehículo para ver los precios correspondientes.'}</p></div><span className="step-pill">2–4 de 4</span></div>
+
+        <label className="field-label">¿Qué vehículo vas a traer?</label>
+        <VehicleSelector value={booking.vehicleType} onChange={(id)=>setBooking(b=>({...b,vehicleType:id}))}/>
 
         <label className="field-label">Servicio</label>
-        <div className="service-select-list">{services.map(s=><button key={s.id} className={booking.serviceId===s.id?'selected':''} onClick={()=>setBooking(b=>({...b,serviceId:s.id,vehicleType:null}))}><span><b>{s.name}</b><small>{s.minutes} min</small></span><strong>Desde {money(Math.min(...Object.values(s.prices)))}</strong></button>)}</div>
+        <div className="service-select-list">{services.map(s=><button key={s.id} className={booking.serviceId===s.id?'selected':''} onClick={()=>setBooking(b=>({...b,serviceId:s.id}))}><span><b>{s.name}</b><small>{s.minutes} min</small></span><strong>{booking.vehicleType ? money(s.prices[booking.vehicleType]) : 'Elegí vehículo'}</strong></button>)}</div>
 
-        {selected && <>
-          <label className="field-label">¿Qué vehículo vas a traer?</label>
-          <VehicleSelector value={booking.vehicleType} onChange={(id)=>setBooking(b=>({...b,vehicleType:id}))}/>
-          {booking.vehicleType && <div className="notice">Precio para {vehicleTypes.find(v=>v.id===booking.vehicleType)?.label}: <b>{money(selectedPrice)}</b></div>}
-        </>}
+        {selected && booking.vehicleType && <div className="notice">{selected.name} para {vehicleTypes.find(v=>v.id===booking.vehicleType)?.label}: <b>{money(selectedPrice)}</b></div>}
 
         <div className="form-grid">
           <label>Fecha<input type="date" value={booking.date} onChange={e=>setBooking(b=>({...b,date:e.target.value,time:''}))}/></label>
