@@ -153,10 +153,10 @@ function Home({services,booking,setBooking,navTo}){
       <section className="works-section">
         <div className="section-heading"><div><span className="eyebrow">TRABAJOS REALES</span><h2>Resultados de VFC</h2></div><p>Exterior e interior realizados por VFC Detailing.</p></div>
         <div className="gallery-grid gallery-real">
-          <figure className="work-card image-card hero-work"><img src="/images/vfc-1.jpg" alt="Trabajo exterior realizado por VFC Detailing"/><figcaption>Terminación exterior</figcaption></figure>
-          <figure className="work-card image-card"><img src="/images/vfc-2.jpg" alt="Trabajo interior realizado por VFC Detailing"/><figcaption>Detalle interior</figcaption></figure>
-          <figure className="work-card image-card image-crop-alt"><img src="/images/vfc-1.jpg" alt="Brillo exterior VFC Detailing"/><figcaption>Brillo y terminación</figcaption></figure>
-          <figure className="work-card image-card wide-work image-crop-alt"><img src="/images/vfc-2.jpg" alt="Interior protegido VFC Detailing"/><figcaption>Interior protegido</figcaption></figure>
+        <img src="/images/IMG_minic.jpg" alt="Mini Cooper exterior" />
+        <img src="/images/IMG_minicINT.jpg" alt="Mini Cooper interior" />
+        <img src="/images/IMG_chino.jpg" alt="Exterior VFC" />
+        <img src="/images/IMG_chinoINT.jpg" alt="Interior VFC" />
         </div>
       </section>
 
