@@ -1,6 +1,7 @@
 .gallery-real{
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:repeat(2,260px)!important;
   gap:18px!important;
   width:100%!important;
   align-items:stretch!important;
@@ -22,13 +23,23 @@
   border:1px solid #c8ccd0!important;
 }
 
+/* deja espacio real entre la galeria y el bloque siguiente */
+.works-section{
+  margin-bottom:36px!important;
+}
+
 @media(max-width:700px){
   .gallery-real{
     grid-template-columns:1fr!important;
+    grid-template-rows:repeat(4,220px)!important;
     gap:14px!important;
   }
 
   .gallery-real > img{
     height:220px!important;
+  }
+
+  .works-section{
+    margin-bottom:28px!important;
   }
 }
