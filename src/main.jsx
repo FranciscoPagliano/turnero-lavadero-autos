@@ -36,16 +36,16 @@ function App(){
   const [bookings,setBookings] = useState(initialBookings);
   const [slots,setSlots] = useState(['08:30','09:00','10:00','11:30','13:30','15:00','16:00','17:00','18:00']);
   const [openSlots,setOpenSlots] = useState(['08:30','09:00','10:00','11:30','13:30','15:00','16:00','17:00','18:00']);
-  const [booking,setBooking] = useState({vehicleType:'auto',serviceId:null,date:'2026-08-11',time:'',name:'',phone:'',plate:'',vehicle:''});
+  const [booking,setBooking] = useState({vehicleType:null,serviceId:null,date:'2026-08-11',time:'',name:'',phone:'',plate:'',vehicle:''});
   const [notice,setNotice] = useState('');
   const selected = services.find(s=>s.id===booking.serviceId);
-  const selectedPrice = selected ? selected.prices[booking.vehicleType] : 0;
+  const selectedPrice = selected && booking.vehicleType ? selected.prices[booking.vehicleType] : 0;
 
   const navTo = r => {setRoute(r); setNotice(''); window.scrollTo({top:0,behavior:'smooth'});};
 
   const confirmBooking=()=>{
-    if(!selected || !booking.time || !booking.name.trim() || !booking.phone.trim()){
-      setNotice('Completá servicio, horario, nombre y teléfono para continuar.'); return;
+    if(!selected || !booking.vehicleType || !booking.time || !booking.name.trim() || !booking.phone.trim()){
+      setNotice('Completá servicio, tipo de vehículo, horario, nombre y teléfono para continuar.'); return;
     }
     setBookings(prev=>[...prev,{
       id:Date.now(), date:booking.date, time:booking.time, name:booking.name, phone:booking.phone,
@@ -91,16 +91,14 @@ function BusinessCard(){
 }
 
 function Home({services,booking,setBooking,navTo}){
-  const choose=(id)=>{setBooking(b=>({...b,serviceId:id}));navTo('booking')};
+  const choose=(id)=>{setBooking(b=>({...b,serviceId:id,vehicleType:null}));navTo('booking')};
   return <>
     <BusinessCard/>
     <main className="container home-main">
       <section className="booking-panel compact-panel">
-        <div className="panel-heading"><div><span className="eyebrow">RESERVA ONLINE</span><h2>Reservá tu turno</h2><p>Primero elegí el tipo de vehículo para ver el precio correcto.</p></div><span className="step-pill">1 de 4</span></div>
-        <VehicleSelector value={booking.vehicleType} onChange={(id)=>setBooking(b=>({...b,vehicleType:id}))}/>
-        <div className="services-title"><h3>Elegí tu lavado</h3><span>Precios según {vehicleTypes.find(v=>v.id===booking.vehicleType)?.label}</span></div>
+        <div className="panel-heading"><div><span className="eyebrow">RESERVA ONLINE</span><h2>Elegí tu lavado</h2><p>Seleccioná el servicio que querés. En el siguiente paso elegís tu vehículo y ves el precio exacto.</p></div><span className="step-pill">1 de 4</span></div>
         <div className="service-grid">
-          {services.map(s=><ServiceCard key={s.id} service={s} vehicleType={booking.vehicleType} onChoose={()=>choose(s.id)}/>) }
+          {services.map(s=><ServiceCard key={s.id} service={s} onChoose={()=>choose(s.id)}/>) }
         </div>
       </section>
 
@@ -126,11 +124,12 @@ function VehicleSelector({value,onChange}){
   return <div className="vehicle-grid">{vehicleTypes.map(v=><button key={v.id} className={`vehicle-btn ${value===v.id?'active':''}`} onClick={()=>onChange(v.id)}><span className="vehicle-icon">{v.icon}</span><span>{v.label}</span>{value===v.id && <b>✓</b>}</button>)}</div>
 }
 
-function ServiceCard({service,vehicleType,onChoose}){
+function ServiceCard({service,onChoose}){
+  const lowestPrice = Math.min(...Object.values(service.prices));
   return <article className={`service-card ${service.badge?'featured':''}`}>
     {service.badge && <span className="badge">{service.badge}</span>}
     <div className="service-top"><div><h3>{service.name}</h3><p>{service.desc}</p></div><span className="duration">{service.minutes} min</span></div>
-    <div className="service-bottom"><div><small>Desde</small><strong>{money(service.prices[vehicleType])}</strong></div><button onClick={onChoose}>Elegir</button></div>
+    <div className="service-bottom"><div><small>Desde</small><strong>{money(lowestPrice)}</strong></div><button onClick={onChoose}>Elegir</button></div>
   </article>
 }
 
@@ -141,12 +140,16 @@ function Booking({services,booking,setBooking,selected,selectedPrice,openSlots,n
     <button className="back-link" onClick={()=>navTo('home')}>← Volver</button>
     <div className="booking-layout">
       <section className="booking-panel">
-        <div className="panel-heading"><div><span className="eyebrow">RESERVA ONLINE</span><h2>Completá tu turno</h2></div><span className="step-pill">2–4 de 4</span></div>
-        <label className="field-label">Tipo de vehículo</label>
-        <VehicleSelector value={booking.vehicleType} onChange={(id)=>setBooking(b=>({...b,vehicleType:id}))}/>
+        <div className="panel-heading"><div><span className="eyebrow">RESERVA ONLINE</span><h2>Completá tu turno</h2><p>{selected ? `Elegiste ${selected.name}. Ahora seleccioná tu vehículo para ver el precio.` : 'Primero elegí un servicio y después seleccioná tu vehículo.'}</p></div><span className="step-pill">2–4 de 4</span></div>
 
         <label className="field-label">Servicio</label>
-        <div className="service-select-list">{services.map(s=><button key={s.id} className={booking.serviceId===s.id?'selected':''} onClick={()=>setBooking(b=>({...b,serviceId:s.id}))}><span><b>{s.name}</b><small>{s.minutes} min</small></span><strong>{money(s.prices[booking.vehicleType])}</strong></button>)}</div>
+        <div className="service-select-list">{services.map(s=><button key={s.id} className={booking.serviceId===s.id?'selected':''} onClick={()=>setBooking(b=>({...b,serviceId:s.id,vehicleType:null}))}><span><b>{s.name}</b><small>{s.minutes} min</small></span><strong>Desde {money(Math.min(...Object.values(s.prices)))}</strong></button>)}</div>
+
+        {selected && <>
+          <label className="field-label">¿Qué vehículo vas a traer?</label>
+          <VehicleSelector value={booking.vehicleType} onChange={(id)=>setBooking(b=>({...b,vehicleType:id}))}/>
+          {booking.vehicleType && <div className="notice">Precio para {vehicleTypes.find(v=>v.id===booking.vehicleType)?.label}: <b>{money(selectedPrice)}</b></div>}
+        </>}
 
         <div className="form-grid">
           <label>Fecha<input type="date" value={booking.date} onChange={e=>setBooking(b=>({...b,date:e.target.value,time:''}))}/></label>
@@ -162,10 +165,10 @@ function Booking({services,booking,setBooking,selected,selectedPrice,openSlots,n
       <aside className="summary-card">
         <span className="eyebrow">TU RESERVA</span>
         <h3>{selected?.name || 'Elegí un lavado'}</h3>
-        <div className="summary-row"><span>Vehículo</span><b>{vehicleTypes.find(v=>v.id===booking.vehicleType)?.label}</b></div>
-        <div className="summary-row"><span>Precio</span><b>{selected?money(selectedPrice):'—'}</b></div>
-        <div className="summary-row"><span>Seña</span><b>{selected?money(selected.deposit):'—'}</b></div>
-        <div className="summary-row"><span>Saldo en el local</span><b>{selected?money(selectedPrice-selected.deposit):'—'}</b></div>
+        <div className="summary-row"><span>Vehículo</span><b>{booking.vehicleType ? vehicleTypes.find(v=>v.id===booking.vehicleType)?.label : '—'}</b></div>
+        <div className="summary-row"><span>Precio</span><b>{selected && booking.vehicleType?money(selectedPrice):'—'}</b></div>
+        <div className="summary-row"><span>Seña</span><b>{selected && booking.vehicleType?money(selected.deposit):'—'}</b></div>
+        <div className="summary-row"><span>Saldo en el local</span><b>{selected && booking.vehicleType?money(selectedPrice-selected.deposit):'—'}</b></div>
         <button className="pay-btn" onClick={confirmBooking}>Continuar al pago de seña</button>
         <small>Maqueta: el pago está simulado. Luego puede conectarse con Mercado Pago.</small>
       </aside>
